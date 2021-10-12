@@ -2,6 +2,7 @@
 imports
 {
 import Data.Maybe (isJust)
+import Data.List (intercalate)
 }
 
 data AExp v
@@ -91,7 +92,7 @@ sem BExp
 {
 eval :: Stmt v -> Maybe (Stmt v)
 eval stmt
-  | not (null errs) = error (unlines errs)
+  | not (null errs) = error (intercalate ", " errs)
   | changed_Syn_Stmt wrapped = Just (eval_Syn_Stmt wrapped)
   | otherwise = Nothing
   where
