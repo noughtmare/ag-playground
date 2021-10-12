@@ -1,0 +1,40 @@
+-- vi:syntax=haskell
+
+optpragmas
+{
+-- This goes verbatim above the module header
+{-# LANGUAGE ScopedTypeVariables #-}
+}
+
+data Tree a
+  | Leaf
+  | Node  l :: (Tree {a})  x :: {a}  r :: (Tree {a})
+deriving Tree : Show
+
+attr Tree
+  syn isOrdered :: Bool
+  inh lb :: {Maybe @a}
+  inh ub :: {Maybe @a}
+
+sem Ord {a} => Tree
+  | Leaf lhs.isOrdered = True
+  | Node
+    loc.test = @l
+    l.ub = Just @x
+    r.lb = Just @x
+    lhs.isOrdered = @loc.isOrdered
+    loc.isOrdered
+      = { maybe True (<= @x) @lhs.lb
+       && maybe True (>= @x) @lhs.ub
+       && @l.isOrdered
+       && @r.isOrdered
+        }
+
+sem Tree
+  | Node
+    lhs.isOrdered := { True || @loc.isOrdered }
+
+{
+isOrdered :: Ord a => Tree a -> Bool
+isOrdered t = isOrdered_Syn_Tree (wrap_Tree (sem_Tree t) (Inh_Tree Nothing Nothing))
+}

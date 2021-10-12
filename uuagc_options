@@ -1,0 +1,29 @@
+file: "src/IMP.ag"
+options: haskellsyntax, module "IMP", catas, semfuns, signatures, wrappers, data, kennedywarren
+
+file: "src/Playground.ag"
+options: haskellsyntax, module "Playground", catas, semfuns, signatures, wrappers, data
+
+-- file: "src/ConstantFolding.ag"
+-- options: haskellsyntax, module "ConstantFolding", catas, semfuns, signatures, wrappers, data, genvisage
+-- 
+-- file: "src/IsOrdered.ag"
+-- options: haskellsyntax, module "IsOrdered", catas, semfuns, signatures, wrappers, data, genvisage
+
+file: "src/Exp.ag"
+options: haskellsyntax, module "Exp", genvisage
+
+-- , genmirage
+
+file: "src/Sort.ag"
+options: haskellsyntax, module "Sort", catas, semfuns, signatures, wrappers, data
+
+file: "src/Loop.ag"
+options: haskellsyntax, module "Loop", catas, semfuns, signatures, wrappers, data
+
+file: "src/PolyTest.ag"
+options: haskellsyntax, module "PolyTest", catas, semfuns, signatures, wrappers
+
+file: "src/IO.ag"
+options: haskellsyntax, module "IO", catas, semfuns, signatures, wrappers, data
+

@@ -1,0 +1,4 @@
+packages:
+  ./*.cabal
+-- /home/jaro/haskell/uuagc/uuagc/trunk/uuagc.cabal
+-- /home/jaro/haskell/uuagc/uuagc/trunk/cabal-plugin/uuagc-cabal.cabal

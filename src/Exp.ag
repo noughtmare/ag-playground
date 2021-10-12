@@ -1,0 +1,23 @@
+data Exp
+  | Con  con  :: Int
+  | Add  lef  :: Exp   rit :: Exp
+  | Var  name :: Name
+
+attr Exp
+  inh env :: Env
+  syn val :: Int
+
+sem Exp 
+  | Con lhs.val = @con
+  | Add lhs.val = @lef.val + @rit.val
+        lef.env = @lhs.env
+        rit.env = @lhs.env
+  | Var lhs.val = lookup @name @lhs.env
+
+attr Exp
+  syn vars :: {[Name]}
+
+sem Exp
+  | Con lhs.vars = []
+  | Add lhs.vars = @lef.vars ++ @rit.vars
+  | Var lhs.vars = [@name]

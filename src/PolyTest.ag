@@ -1,0 +1,18 @@
+{
+data Unique a
+  = Unique Int a
+
+type UniqueUnit = Unique ()
+
+type UniqueString = Unique String
+}
+
+data UniqueUnit
+  | Unique
+      a :: {Int}
+      b :: {()}
+
+data UniqueString
+  | Unique
+      a :: {Int}
+      b :: {String}

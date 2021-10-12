@@ -1,0 +1,38 @@
+-- vi:syntax=haskell
+
+optpragmas {
+{-# LANGUAGE MagicHash, UnboxedTuples #-}
+}
+
+imports {
+import Data.IORef
+import GHC.Types
+import GHC.Prim
+}
+
+{
+data State = State { unState :: State# RealWorld }
+
+runIO# :: State -> IO a -> (State, a)
+runIO# (State s) (IO f) = let (# s', x #) = f s in (State s', x)
+}
+
+data Tree
+   | X
+
+attr Tree
+   chn io :: {State}
+   syn iden :: {IORef ()}
+
+sem Tree
+  | X lhs.(io, iden) = runIO# @lhs.io $ newIORef ()
+
+
+{
+main :: IO ()
+main = do
+  r <- IO $ \s ->
+    let syn = wrap_Tree (sem_Tree X) Inh_Tree { io_Inh_Tree = State s }
+    in (# unState (io_Syn_Tree syn), iden_Syn_Tree syn #)
+  print =<< readIORef r
+}

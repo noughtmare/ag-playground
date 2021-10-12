@@ -1,0 +1,54 @@
+
+optpragmas
+{
+{-# LANGUAGE ScopedTypeVariables #-}
+}
+
+imports
+{
+import Data.Bifunctor (first, second)
+}
+
+data List a | Nil
+            | Cons head :: {a}
+                   tail :: (List {a})
+
+attr List
+  syn sorted    :: {[@a] -> [@a]}
+  inh pivot     :: {@a}
+  syn partition :: {(List @a, List @a)}
+  syn copy      :: self
+
+sem Ord {a} => List
+  | Nil  lhs.sorted    = id
+         lhs.partition = (Nil, Nil)
+
+  | Cons lhs.sorted = @left.sorted . (@head :) . @right.sorted
+
+         lhs.partition
+           = (if @head < @lhs.pivot then first else second)
+               (Cons @head)
+               @tail.partition
+
+         part.pivot = @head
+
+         inst.part :: (List {a})
+         inst.part = @tail.copy
+
+         loc.tup = @part.partition
+
+         inst.left  :: (List {a})
+         inst.left = fst @loc.tup
+         
+         inst.right :: (List {a})
+         inst.right = snd @loc.tup
+
+{
+fromList :: [a] -> List a
+fromList [] = Nil
+fromList (x:xs) = Cons x (fromList xs)
+
+quicksort :: Ord a => [a] -> [a]
+quicksort xs
+  = sorted_Syn_List (wrap_List (sem_List (fromList xs)) Inh_List{}) []
+}

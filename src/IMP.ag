@@ -1,0 +1,85 @@
+imports
+{
+import Data.Maybe (isJust)
+}
+
+data AExp v
+  | ALit val :: Int
+  | AVar var :: {v}
+  | ANeg arg :: Int
+  | ADiv lft :: (AExp {v}) rgt :: (AExp {v})
+  | AAdd lft :: (AExp {v}) rgt :: (AExp {v})
+
+data BExp v
+  | BLit val :: Bool
+  -- less than or equal to
+  | BLe  lft :: (AExp {v}) rgt :: (AExp {v})
+  | BNeg arg :: (BExp {v})
+  | BAnd lft :: (BExp {v}) rgt :: (BExp {v})
+
+data Stmt v
+  | SBlock  blk :: (Block {v})
+  | SAssign var :: {v} val :: (AExp {v})
+  -- If-then-else
+  | SIte    cnd :: (BExp {v}) tru :: (Block {v}) fls :: (Block {v})
+  | SWhile  cnd :: (BExp {v}) bdy :: (Block {v})
+  | SSeq    now :: (Stmt {v}) thn :: (Stmt {v})
+  -- identity of SSeq
+  | SUnit
+
+-- empty block is Nothing
+type Block v = maybe (Stmt {v})
+
+attr AExp BExp Stmt Block
+  syn eval :: self
+  syn changed use {||} {False} :: Bool
+  syn errors use {++} {[]} :: {[String]}
+
+attr AExp
+  syn val use {(\_ _ -> Nothing)} {Nothing} :: {Maybe Int}
+
+attr BExp
+  syn val use {(\_ _ -> Nothing)} {Nothing} :: {Maybe Bool}
+
+sem AExp | ALit lhs.val = Just @val
+sem BExp | BLit lhs.val = Just @val
+
+-- int division
+sem AExp
+  | ADiv
+    loc.res
+      = case @rgt.val of
+        Just 0 -> Just (Left "divide by zero")
+        _ -> Right . ALit <$> (div <$> @lft.val <*> @rgt.val)
+    +eval
+      = case @loc.res of
+        Just (Right x) -> const x
+        _ -> id
+    +changed = (isJust @loc.res ||)
+    +errors
+      = case @loc.res of
+        Just (Left msg) -> (msg :)
+        _ -> id
+
+-- int addition
+sem AExp
+  | AAdd
+    loc.res = ALit <$> ((+) <$> @lft.val <*> @rgt.val)
+    +eval = maybe id const @loc.res
+    +changed = (isJust @loc.res ||)
+
+-- a negative int literal
+sem AExp
+  | ANeg
+    lhs.eval = ALit (negate @arg)
+    lhs.changed = True
+   
+-- boolean and (strict only on first argument)
+sem BExp
+  | BAnd
+    loc.res
+      = BLit <$> case @lft.val of
+        Just True -> @rgt.val
+        x -> x
+    +eval = maybe id const @loc.res
+    +changed = (isJust @loc.res ||)

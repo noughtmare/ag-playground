@@ -1,0 +1,134 @@
+-- vi:syntax=haskell
+
+{
+import Data.List (elemIndex)
+import Data.Maybe (fromJust)
+}
+
+type Lams = [Lam]
+type Case = (Pattern, Lam)
+type Cases = [Case]
+type Patterns = [Pattern]
+
+data Lam
+  | Var   name :: String
+  | Abs   name :: String  body  :: Lam
+  | App   fun  :: Lam     arg   :: Lam
+  | Str   val  :: String
+  | Con   name :: String  args  :: Lams
+  | Case  expr :: Lam     cases :: Cases
+deriving Lam : Show, Read
+
+data Pattern
+  | PVar  name :: String
+  | PStr  val  :: String
+  | PCon  name :: String  args :: Patterns
+deriving Pattern : Show, Read
+
+type DBs = [DB]
+type BCases = [BCase]
+type BCase = (BPattern, DB)
+type BPatterns = [BPattern]
+
+data DB
+  | BVar   index :: Int
+  | BAbs   body  :: DB
+  | BApp   fun   :: DB      arg   :: DB
+  | BStr   val   :: String
+  | BCon   index :: Int     args  :: DBs
+  | BCase  expr  :: DB      cases :: BCases
+deriving DB : Eq, Show
+
+data BPattern
+  | BPVar
+  | BPStr  val   :: String
+  | BPCon  index :: Int     args :: BPatterns
+deriving BPattern : Eq, Show
+
+attr Lam Lams Cases Case
+  inh vs :: {[String]}
+  chn cs :: {[String]}
+
+attr Lam
+  syn db :: DB
+
+attr Lams
+  syn db :: DBs
+
+attr Cases
+  syn db :: BCases
+
+attr Case
+  syn db :: BCase
+
+attr Pattern Patterns
+  chn vs :: {[String]}
+  chn cs :: {[String]}
+
+attr Pattern
+  syn db :: BPattern
+
+attr Patterns
+  syn db :: BPatterns
+
+{
+updateCs :: String -> [String] -> (Int, [String])
+updateCs name cs = case elemIndex name cs of
+  Nothing -> (length cs, name : cs)
+  Just i -> (length cs - 1 - i, cs)
+}
+
+sem Lam
+  | Var   lhs.db  = BVar (fromJust (elemIndex @name @lhs.vs))
+  | Abs   lhs.db  = BAbs @body.db
+          body.vs = @name : @lhs.vs
+  | App   lhs.db  = BApp @fun.db @arg.db
+  | Str   lhs.db  = BStr @val
+  | Con   lhs.db  = BCon (fst @loc.ics) @args.db
+          loc.ics = updateCs @name @lhs.cs
+          args.cs = snd @loc.ics
+  | Case  lhs.db  = BCase @expr.db @cases.db
+
+sem Lams
+  | Nil   lhs.db  = []
+  | Cons  lhs.db  = @hd.db : @tl.db
+
+sem Cases
+  | Nil   lhs.db  = []
+  | Cons  lhs.db  = @hd.db : @tl.db
+
+sem Case
+  | Tuple lhs.db  = (@x1.db, @x2.db)
+
+sem Pattern
+  | PVar  lhs.db  = BPVar
+          lhs.vs  = @name : @lhs.vs
+  | PStr  lhs.db  = BPStr @val
+  | PCon  lhs.db  = BPCon (fst @loc.ics) @args.db
+          loc.ics = updateCs @name @lhs.cs
+          args.cs = snd @loc.ics
+
+sem Patterns
+  | Nil   lhs.db  = []
+  | Cons  lhs.db  = @hd.db : @tl.db
+
+{
+ex1, ex2, ex3 :: Lam
+
+ex1 = App (App (Abs "x" (Abs "y" (App (Var "y") (Var "x"))))
+  (Str "test"))
+  (Abs "y" (Var "y"))
+
+ex2 = Case (Con "Just" [Str "This"])
+  [ (PCon "Just" [PVar "x"], Var "x")
+  , (PCon "Nothing" [], Str "That")
+  ]
+
+ex3 = Case (Con "Just" [Str "This"])
+  [ (PCon "Nothing" [], Str "That")
+  , (PCon "Just" [PVar "x"], Var "x")
+  ]
+
+lam2DB :: Lam -> DB
+lam2DB expr = db_Syn_Lam (wrap_Lam (sem_Lam expr) (Inh_Lam [] []))
+}

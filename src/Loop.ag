@@ -1,0 +1,22 @@
+
+optpragmas
+{
+{-# LANGUAGE ScopedTypeVariables #-}
+}
+
+data Loop a | Loop
+
+attr Loop
+  syn res :: {@a}
+  syn copy :: self
+
+sem Loop
+  | Loop inst.loop :: (Loop a)
+         inst.loop = @copy
+
+         lhs.res = @loop.res
+
+{
+loop :: a
+loop = res_Syn_Loop (wrap_Loop (sem_Loop Loop) Inh_Loop)
+}
