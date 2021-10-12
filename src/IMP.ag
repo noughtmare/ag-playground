@@ -10,6 +10,7 @@ data AExp v
   | ANeg arg :: Int
   | ADiv lft :: (AExp {v}) rgt :: (AExp {v})
   | AAdd lft :: (AExp {v}) rgt :: (AExp {v})
+deriving AExp : Show
 
 data BExp v
   | BLit val :: Bool
@@ -17,6 +18,7 @@ data BExp v
   | BLe  lft :: (AExp {v}) rgt :: (AExp {v})
   | BNeg arg :: (BExp {v})
   | BAnd lft :: (BExp {v}) rgt :: (BExp {v})
+deriving BExp : Show
 
 data Stmt v
   | SBlock  blk :: (Block {v})
@@ -27,6 +29,7 @@ data Stmt v
   | SSeq    now :: (Stmt {v}) thn :: (Stmt {v})
   -- identity of SSeq
   | SUnit
+deriving Stmt : Show
 
 -- empty block is Nothing
 type Block v = maybe (Stmt {v})
@@ -84,3 +87,14 @@ sem BExp
         x -> x
     +eval = maybe id const @loc.res
     +changed = (isJust @loc.res ||)
+
+{
+eval :: Stmt v -> Maybe (Stmt v)
+eval stmt
+  | not (null errs) = error (unlines errs)
+  | changed_Syn_Stmt wrapped = Just (eval_Syn_Stmt wrapped)
+  | otherwise = Nothing
+  where
+    wrapped = wrap_Stmt (sem_Stmt stmt) Inh_Stmt
+    errs = errors_Syn_Stmt wrapped
+}
