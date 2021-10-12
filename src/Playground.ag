@@ -1,3 +1,4 @@
+-- vi:syntax=haskell
 type AverageList = [Double]
 
 attr AverageList

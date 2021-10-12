@@ -1,3 +1,4 @@
+-- vi:syntax=haskell
 {
 data Unique a
   = Unique Int a

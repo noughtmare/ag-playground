@@ -1,3 +1,4 @@
+-- vi:syntax=haskell
 data Exp
   | Con  con  :: Int
   | Add  lef  :: Exp   rit :: Exp
